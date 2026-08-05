@@ -1,0 +1,9 @@
+vosk
+sounddevice
+numpy
+edge-tts
+pyttsx3
+PyGithub
+openai
+python-dotenv
+pygame
