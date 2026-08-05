@@ -4,6 +4,7 @@ import logging
 from config import Config
 from core.wake_word import WakeWordDetector
 from core.stt_tts import TTS
+from core.search import WebSearcher
 from github_service.client import GitHubClient
 from github_service.intents import IntentParser
 
@@ -11,8 +12,8 @@ from github_service.intents import IntentParser
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def execute_intent(intent: dict, github_client: GitHubClient) -> str:
-    """Executes the GitHub action based on the parsed intent and returns a string to speak."""
+def execute_intent(intent: dict, github_client: GitHubClient, searcher: WebSearcher, intent_parser: IntentParser) -> str:
+    """Executes the action based on the parsed intent and returns a string to speak."""
     action = intent.get("action", "unknown")
 
     if action == "check_notifications":
@@ -50,6 +51,18 @@ def execute_intent(intent: dict, github_client: GitHubClient) -> str:
         result = github_client.append_to_file(file_path, content, commit_msg)
         return result
 
+    elif action == "web_search":
+        query = intent.get("query", "")
+        if not query:
+            return "I couldn't figure out what you wanted to search for."
+
+        logger.info(f"Executing web search for: {query}")
+        results = searcher.search(query, max_results=3)
+
+        logger.info("Summarizing search results...")
+        summary = intent_parser.summarize_search_results(query, results)
+        return summary
+
     else:
         return "I didn't understand the command."
 
@@ -65,6 +78,7 @@ def main():
 
     # Initialize components
     tts = TTS()
+    searcher = WebSearcher()
 
     logger.info("Loading speech recognition model. This might take a few seconds...")
     try:
@@ -105,7 +119,7 @@ def main():
                 logger.info(f"Parsed intent: {intent}")
 
                 # 4. Execute the intent
-                response_text = execute_intent(intent, github_client)
+                response_text = execute_intent(intent, github_client, searcher, intent_parser)
 
                 # 5. Speak the result
                 tts.speak(response_text)

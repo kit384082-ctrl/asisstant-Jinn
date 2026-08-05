@@ -60,6 +60,7 @@ Run the main script:
    - "Проверь мои уведомления" (Check my notifications)
    - "Добавь в файл notes.md купить молоко" (Add 'buy milk' to notes.md file)
    - "Какие последние коммиты?" (What are the recent commits?)
+   - "Какая сегодня погода в Москве?" (What is the weather in Moscow today?)
 6. Genie will execute the action on the `main` branch and speak the result back to you in English.
 
 ## Architecture
@@ -67,6 +68,7 @@ Run the main script:
 - `main.py`: Entry point and main event loop.
 - `core/wake_word.py`: Microphone listening and wake word detection using Vosk.
 - `core/stt_tts.py`: Speech recognition (Vosk) and speech synthesis (edge-tts / pyttsx3).
+- `core/search.py`: Web search functionality using DuckDuckGo.
 - `github_service/client.py`: GitHub API client using PyGithub. Enforces operations on `main`.
 - `github_service/intents.py`: Uses OpenAI to parse transcribed Russian text into JSON commands.
 - `config.py`: Configuration loader and validator.

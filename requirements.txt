@@ -7,3 +7,4 @@ PyGithub
 openai
 python-dotenv
 pygame
+duckduckgo-search

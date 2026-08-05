@@ -10,6 +10,7 @@ class Config:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
     VOSK_MODEL_PATH = os.getenv("VOSK_MODEL_PATH", "model")
+    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY") # Optional
 
     @classmethod
     def validate(cls):
