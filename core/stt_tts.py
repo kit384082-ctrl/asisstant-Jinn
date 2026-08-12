@@ -1,97 +1,185 @@
-import pyttsx3
+"""Speech-to-text and text-to-speech helpers with lazy audio initialization."""
+
+from __future__ import annotations
+
 import asyncio
-import edge_tts
 import json
 import logging
-import tempfile
 import os
-import pygame
-from typing import Optional
+import tempfile
+import threading
+from pathlib import Path
+from typing import Any
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Initialize pygame mixer for audio playback
-pygame.mixer.init()
 
 class TTS:
-    def __init__(self):
-        # Initialize offline fallback (pyttsx3)
-        self.engine = pyttsx3.init()
-        # Ensure English voice is selected for fallback
-        voices = self.engine.getProperty('voices')
-        for voice in voices:
-            if 'english' in voice.name.lower() or 'en' in voice.id.lower():
-                self.engine.setProperty('voice', voice.id)
-                break
+    """Edge TTS with a lazy pyttsx3 fallback.
 
-        # Edge TTS default voice
-        self.edge_voice = "en-US-AriaNeural"
+    No audio modules or devices are initialized during import, so the web GUI
+    can run on headless machines and systems without a sound card.
+    """
 
-    async def speak_edge(self, text: str):
-        """Attempts to speak using edge-tts (requires internet)"""
-        temp_filename = None
+    def __init__(
+        self,
+        voice: str = "ru-RU-SvetlanaNeural",
+        language: str | None = None,
+    ):
+        self.edge_voice = voice
+        self.language = (language or voice).split("-", 1)[0].casefold()
+        self._engine: Any | None = None
+        self._lock = threading.Lock()
+
+    def _get_offline_engine(self) -> Any:
+        if self._engine is None:
+            import pyttsx3
+
+            self._engine = pyttsx3.init()
+            voices = self._engine.getProperty("voices") or []
+            markers = {
+                "ru": ("russian", "ru-", "ru_", "рус"),
+                "en": ("english", "en-", "en_"),
+                "de": ("german", "deutsch", "de-", "de_"),
+                "es": ("spanish", "español", "espanol", "es-", "es_"),
+                "fr": ("french", "français", "francais", "fr-", "fr_"),
+            }.get(self.language, (self.language,))
+            for voice in voices:
+                raw_languages = " ".join(
+                    str(value) for value in (getattr(voice, "languages", None) or [])
+                )
+                identity = (
+                    f"{getattr(voice, 'name', '')} {getattr(voice, 'id', '')} "
+                    f"{raw_languages}"
+                ).casefold()
+                if any(marker in identity for marker in markers):
+                    self._engine.setProperty("voice", voice.id)
+                    break
+        return self._engine
+
+    async def _speak_edge(self, text: str) -> None:
+        import edge_tts
+        import pygame
+
+        temp_filename: str | None = None
         try:
-            communicate = edge_tts.Communicate(text, self.edge_voice)
-
-            # Using tempfile safely across platforms
-            temp_dir = tempfile.gettempdir()
-            temp_filename = os.path.join(temp_dir, f"genie_tts_{os.urandom(4).hex()}.mp3")
-
-            await communicate.save(temp_filename)
-
-            # Play using pygame
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            fd, temp_filename = tempfile.mkstemp(prefix="genie_tts_", suffix=".mp3")
+            os.close(fd)
+            await edge_tts.Communicate(text, self.edge_voice).save(temp_filename)
             pygame.mixer.music.load(temp_filename)
             pygame.mixer.music.play()
-
-            # Block until playback is finished
+            clock = pygame.time.Clock()
             while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
-
-            pygame.mixer.music.unload()
-
-        except Exception as e:
-            logger.warning(f"Edge-TTS failed: {e}. Falling back to pyttsx3.")
-            self.speak_pyttsx3(text)
+                clock.tick(20)
+            if hasattr(pygame.mixer.music, "unload"):
+                pygame.mixer.music.unload()
         finally:
-            if temp_filename and os.path.exists(temp_filename):
+            if temp_filename:
                 try:
-                    os.remove(temp_filename)
-                except Exception as e:
-                    logger.debug(f"Failed to remove temp audio file: {e}")
+                    Path(temp_filename).unlink(missing_ok=True)
+                except OSError:
+                    logger.debug(
+                        "Could not delete temporary speech file", exc_info=True
+                    )
 
-    def speak_pyttsx3(self, text: str):
-        """Fallback offline text-to-speech"""
-        self.engine.say(text)
-        self.engine.runAndWait()
+    @staticmethod
+    def _run_coroutine(coroutine: Any) -> None:
+        """Run an async synthesizer even if the caller already owns an event loop."""
 
-    def speak(self, text: str):
-        """Main method to call for speaking."""
-        logger.info(f"Genie says: {text}")
         try:
-            # Use asyncio.run for robust event loop handling in Python 3.7+
-            asyncio.run(self.speak_edge(text))
-        except Exception as e:
-            logger.error(f"Error running async edge-tts: {e}")
-            self.speak_pyttsx3(text)
+            asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(coroutine)
+            return
+
+        error: list[Exception] = []
+
+        def runner() -> None:
+            try:
+                asyncio.run(coroutine)
+            except Exception as exc:  # noqa: BLE001 - re-raised in caller
+                error.append(exc)
+
+        thread = threading.Thread(target=runner, name="genie-tts-event-loop")
+        thread.start()
+        thread.join()
+        if error:
+            raise error[0]
+
+    def speak_pyttsx3(self, text: str) -> None:
+        engine = self._get_offline_engine()
+        engine.say(text)
+        engine.runAndWait()
+
+    def speak(self, text: str) -> bool:
+        """Speak text and return whether any speech backend succeeded."""
+
+        if not text or not text.strip():
+            return False
+        logger.info("Genie says: %s", text)
+        with self._lock:
+            try:
+                self._run_coroutine(self._speak_edge(text))
+                return True
+            except Exception as edge_error:  # noqa: BLE001 - fallback boundary
+                logger.warning("Edge TTS failed: %s; using pyttsx3", edge_error)
+                try:
+                    self.speak_pyttsx3(text)
+                    return True
+                except Exception as offline_error:  # noqa: BLE001 - audio driver boundary
+                    logger.error("All TTS backends failed: %s", offline_error)
+                    return False
+
+    def close(self) -> None:
+        if self._engine is not None:
+            try:
+                self._engine.stop()
+            except Exception:
+                logger.debug("Could not stop pyttsx3", exc_info=True)
+
 
 class STT:
-    def __init__(self, model_path: str):
-        import vosk
-        if not __import__("os").path.exists(model_path):
-            raise ValueError(f"Vosk model not found at {model_path}. Please download it and configure VOSK_MODEL_PATH in .env")
+    def __init__(self, model_path: str, sample_rate: int = 16000):
+        try:
+            import vosk
+        except ImportError as exc:
+            raise RuntimeError(
+                "Vosk не установлен. Выполните: pip install -r requirements.txt"
+            ) from exc
 
-        vosk.SetLogLevel(-1) # Disable verbose logs
-        self.model = vosk.Model(model_path)
-        # Using 16000 sample rate as default for vosk
-        self.recognizer = vosk.KaldiRecognizer(self.model, 16000)
+        path = Path(model_path).expanduser()
+        if not path.is_dir():
+            raise ValueError(
+                f"Модель Vosk не найдена: {model_path}. Укажите VOSK_MODEL_PATH в .env."
+            )
+        vosk.SetLogLevel(-1)
+        self.model = vosk.Model(str(path))
+        self.sample_rate = sample_rate
+        self.recognizer = vosk.KaldiRecognizer(self.model, sample_rate)
 
-    def process_audio(self, data: bytes) -> Optional[str]:
-        """Process an audio chunk. Returns transcribed text if a full phrase is detected."""
+    @staticmethod
+    def _read_text(raw_json: str, key: str = "text") -> str:
+        try:
+            value = json.loads(raw_json).get(key, "")
+        except (json.JSONDecodeError, AttributeError):
+            logger.warning("Vosk returned invalid JSON")
+            return ""
+        return value.strip() if isinstance(value, str) else ""
+
+    def reset(self) -> None:
+        self.recognizer.Reset()
+
+    def process_audio(self, data: bytes) -> str | None:
+        """Return text when Vosk marks a phrase as complete."""
+
         if self.recognizer.AcceptWaveform(data):
-            result_json = self.recognizer.Result()
-            result_dict = json.loads(result_json)
-            text = result_dict.get('text', '')
-            if text:
-                return text
+            return self._read_text(self.recognizer.Result()) or None
         return None
+
+    def partial_text(self) -> str:
+        return self._read_text(self.recognizer.PartialResult(), key="partial")
+
+    def final_text(self) -> str:
+        return self._read_text(self.recognizer.FinalResult())

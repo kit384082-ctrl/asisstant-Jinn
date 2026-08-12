@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "Genie · Джинн — Personal Agent",
+  "short_name": "Genie",
+  "description": "A multilingual local personal agent for voice, planning, applications, and GitHub.",
+  "lang": "en",
+  "start_url": "/#chat",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080b12",
+  "theme_color": "#9f7aea",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

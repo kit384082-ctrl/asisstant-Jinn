@@ -1,0 +1,35 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage/
+htmlcov/
+.venv/
+venv/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local personal-agent data
+.genie/
+*.db-wal
+*.db-shm
+
+# Local speech models and generated audio
+model/
+vosk-model*/
+.ollama/
+ollama-models/
+*.mp3
+*.wav
