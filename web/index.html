@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="Джинн — локальный персональный ассистент">
+  <meta name="color-scheme" content="dark">
+  <title>Джинн · Персональный агент</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/i18n.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="cinema" aria-hidden="true">
+    <div class="noise"></div>
+    <div class="aurora aurora-one"></div>
+    <div class="aurora aurora-two"></div>
+    <div class="light-wave light-wave-one"></div>
+    <div class="light-wave light-wave-two"></div>
+    <div class="particle-field" id="particle-field"></div>
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar glass">
+      <a class="brand" href="#chat" data-navigate="chat" aria-label="Джинн — главная">
+        <span class="brand-orb"><i></i><i></i><b>✦</b></span>
+        <span><strong>ДЖИНН</strong><small>ПЕРСОНАЛЬНЫЙ АГЕНТ</small></span>
+      </a>
+
+      <div class="agent-mini">
+        <span class="mini-avatar"><i></i></span>
+        <span><strong>Агент активен</strong><small id="sidebar-clock">—</small></span>
+        <span class="online-dot"></span>
+      </div>
+
+      <nav class="main-nav" aria-label="Разделы">
+        <button class="active" type="button" data-view-target="chat">
+          <span class="nav-icon">✦</span><span>Диалог</span><kbd>1</kbd>
+        </button>
+        <button type="button" data-view-target="planner">
+          <span class="nav-icon">◷</span><span>Планировщик</span><em id="nav-agenda-count">0</em>
+        </button>
+        <button type="button" data-view-target="apps">
+          <span class="nav-icon">◫</span><span>Приложения</span><kbd>3</kbd>
+        </button>
+        <button type="button" data-view-target="github">
+          <span class="nav-icon">⌘</span><span>GitHub</span><kbd>4</kbd>
+        </button>
+      </nav>
+
+      <div class="sidebar-section">
+        <span class="sidebar-label">БЫСТРОЕ СОЗДАНИЕ</span>
+        <button class="side-action" type="button" data-create-kind="timer"><span class="violet">◷</span> Таймер</button>
+        <button class="side-action" type="button" data-create-kind="reminder"><span class="amber">♢</span> Напоминание</button>
+        <button class="side-action" type="button" data-create-kind="event"><span class="cyan">▦</span> Событие</button>
+        <button class="side-action" type="button" data-create-kind="note"><span class="rose">✎</span> Заметка</button>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="notification-button" class="notification-button" type="button">
+          <span>◉</span><span><strong>Уведомления</strong><small id="notification-state">включить</small></span>
+        </button>
+        <button id="settings-button" class="profile-button" type="button">
+          <span class="profile-avatar">ДЖ</span>
+          <span><strong>Настройки</strong><small id="profile-repo">Локальный режим</small></span>
+          <span>›</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar glass">
+        <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Открыть меню">☰</button>
+        <div>
+          <span class="eyebrow" id="view-eyebrow">ПЕРСОНАЛЬНЫЙ АГЕНТ</span>
+          <h1 id="view-title">Диалог с Джинном</h1>
+        </div>
+        <div class="topbar-actions">
+          <label class="language-control" title="Язык интерфейса">
+            <span aria-hidden="true">◎</span>
+            <select id="language-selector" aria-label="Язык интерфейса">
+              <option value="auto">Авто</option>
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+            </select>
+          </label>
+          <span class="secure-chip"><i></i> Локально и безопасно</span>
+          <button class="round-button" id="quick-create" type="button" title="Создать">＋</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-chat" data-view="chat">
+        <div class="chat-layout">
+          <section class="conversation glass">
+            <div class="conversation-head">
+              <div class="agent-portrait" id="agent-portrait" aria-hidden="true">
+                <span class="portrait-glow"></span><span class="portrait-core">✦</span>
+                <i class="ring ring-a"></i><i class="ring ring-b"></i>
+              </div>
+              <div><strong>Джинн</strong><small><i></i> готов к командам</small></div>
+              <button id="clear-chat" type="button" title="Очистить диалог">Очистить</button>
+            </div>
+
+            <div class="messages" id="messages" aria-live="polite">
+              <section class="welcome" id="welcome">
+                <span class="welcome-kicker">ВАШ ПЕРСОНАЛЬНЫЙ АГЕНТ</span>
+                <h2>Добрый день.<br><em>Чем займёмся?</em></h2>
+                <p>Говорите естественно — я пойму команду, создам план или просто поддержу разговор.</p>
+                <div class="prompt-grid">
+                  <button type="button" data-command="Поставь таймер на 10 минут">
+                    <span class="prompt-icon violet">◷</span><span><strong>Таймер на 10 минут</strong><small>Контроль времени</small></span><b>↗</b>
+                  </button>
+                  <button type="button" data-command="Напомни завтра в 09:00 проверить почту">
+                    <span class="prompt-icon amber">♢</span><span><strong>Напомнить завтра</strong><small>Ничего не забыть</small></span><b>↗</b>
+                  </button>
+                  <button type="button" data-command="Открой калькулятор">
+                    <span class="prompt-icon cyan">◫</span><span><strong>Открыть приложение</strong><small>Быстрый запуск</small></span><b>↗</b>
+                  </button>
+                  <button type="button" data-command="Что ты умеешь?">
+                    <span class="prompt-icon rose">✦</span><span><strong>Возможности Джинна</strong><small>Познакомиться</small></span><b>↗</b>
+                  </button>
+                </div>
+              </section>
+            </div>
+
+            <div class="composer-zone">
+              <div class="voice-wave" id="voice-transcript" hidden>
+                <span></span><span></span><span></span><span></span><span></span>
+                <strong id="interim-text">Слушаю…</strong>
+              </div>
+              <form class="composer" id="command-form">
+                <button class="composer-plus" type="button" data-create-kind="note" title="Быстрая заметка">＋</button>
+                <textarea id="command-input" rows="1" maxlength="4000" placeholder="Напишите или произнесите команду…" aria-label="Команда для Джинна"></textarea>
+                <button class="mic-button" id="mic-button" type="button" aria-label="Голосовой ввод">
+                  <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21m-3 0h6"/></svg>
+                </button>
+                <button class="send-button" id="send-button" type="submit" aria-label="Отправить">
+                  <svg viewBox="0 0 24 24"><path d="m5 12 14-7-4 14-3-6-7-1Z"/><path d="m12 13 7-8"/></svg>
+                </button>
+              </form>
+              <div class="composer-meta"><span><kbd>Enter</kbd> отправить · <kbd>Shift + Enter</kbd> новая строка</span><span id="character-count">0 / 4000</span></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-planner" data-view="planner" hidden>
+        <div class="stats-grid">
+          <button class="stat-card glass" type="button" data-create-kind="timer"><span class="stat-icon violet">◷</span><span><small>Таймеры</small><strong id="count-timers">0</strong></span><b>＋</b></button>
+          <button class="stat-card glass" type="button" data-create-kind="reminder"><span class="stat-icon amber">♢</span><span><small>Напоминания</small><strong id="count-reminders">0</strong></span><b>＋</b></button>
+          <button class="stat-card glass" type="button" data-create-kind="event"><span class="stat-icon cyan">▦</span><span><small>События</small><strong id="count-events">0</strong></span><b>＋</b></button>
+          <button class="stat-card glass" type="button" data-create-kind="note"><span class="stat-icon rose">✎</span><span><small>Заметки</small><strong id="count-notes">0</strong></span><b>＋</b></button>
+        </div>
+
+        <div class="planner-grid">
+          <section class="agenda-card glass">
+            <div class="section-head">
+              <div><span class="eyebrow">РАСПИСАНИЕ</span><h2>Ближайшие дела</h2></div>
+              <div class="segmented" id="agenda-filter">
+                <button class="active" type="button" data-filter="all">Все</button>
+                <button type="button" data-filter="timer">Таймеры</button>
+                <button type="button" data-filter="reminder,event">Планы</button>
+                <button type="button" data-filter="note">Заметки</button>
+              </div>
+            </div>
+            <div class="agenda-list" id="agenda-list"></div>
+          </section>
+
+          <section class="calendar-card glass">
+            <div class="calendar-head">
+              <div><span class="eyebrow">КАЛЕНДАРЬ</span><h2 id="calendar-title">—</h2></div>
+              <div><button id="calendar-prev" type="button">‹</button><button id="calendar-today" type="button">Сегодня</button><button id="calendar-next" type="button">›</button></div>
+            </div>
+            <div class="calendar-week"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+            <a class="export-button" href="/api/calendar/export" download><span>⇩</span> Экспортировать календарь .ics</a>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-apps" data-view="apps" hidden>
+        <section class="apps-panel glass">
+          <div class="section-head">
+            <div><span class="eyebrow">ЛОКАЛЬНЫЙ ЗАПУСК</span><h2>Приложения</h2><p>Открывайте голосом или одним нажатием. Команды выполняются без shell.</p></div>
+            <button class="primary-button" id="add-app-button" type="button"><span aria-hidden="true">＋</span> Добавить приложение</button>
+          </div>
+          <div class="apps-grid" id="apps-grid"></div>
+          <div class="local-notice"><span>⌾</span><p><strong>Только на этом компьютере</strong><br>Из удалённого подключения запуск и настройка приложений заблокированы.</p></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-github" data-view="github" hidden>
+        <section class="github-hero glass">
+          <div class="github-mark">⌘</div>
+          <div><span class="eyebrow">GITHUB COPILOT ДЛЯ РЕПОЗИТОРИЯ</span><h2 id="github-repo-title">Репозиторий не настроен</h2><p>Проверяйте проект и добавляйте записи в файлы голосовыми командами. Все изменения строго направляются в <code>main</code>.</p></div>
+          <button class="primary-button" id="connect-button" type="button"><span>Подключиться</span></button>
+        </section>
+        <div class="github-actions">
+          <button class="github-action glass" type="button" data-action="check_notifications" data-label="Проверь уведомления"><span class="violet">♢</span><strong>Уведомления</strong><small>Новые события GitHub</small><b>→</b></button>
+          <button class="github-action glass" type="button" data-action="check_issues" data-label="Покажи открытые задачи"><span class="amber">!</span><strong>Задачи</strong><small>Открытые issues</small><b>→</b></button>
+          <button class="github-action glass" type="button" data-action="check_prs" data-label="Покажи pull request’ы"><span class="cyan">⑂</span><strong>Pull requests</strong><small>Запросы на слияние</small><b>→</b></button>
+          <button class="github-action glass" type="button" data-action="check_actions" data-label="Проверь GitHub Actions"><span class="green">▷</span><strong>Actions</strong><small>Последний workflow</small><b>→</b></button>
+          <button class="github-action glass" type="button" data-action="recent_commits" data-label="Покажи последние коммиты"><span class="rose">⌁</span><strong>Коммиты</strong><small>Последние изменения</small><b>→</b></button>
+        </div>
+      </section>
+    </main>
+
+    <aside class="insight-rail">
+      <section class="now-card glass">
+        <div class="section-head compact"><div><span class="eyebrow">СЕЙЧАС</span><h3 id="current-date">—</h3></div><span class="live-badge">ЭФИР</span></div>
+        <div class="big-clock" id="big-clock">00:00</div>
+        <div class="next-item" id="next-item"><span class="next-icon">✦</span><span><small>Ближайшее дело</small><strong>План свободен</strong><em>Можно немного отдохнуть</em></span></div>
+      </section>
+
+      <section class="activity-card glass">
+        <div class="section-head compact"><div><span class="eyebrow">АКТИВНОСТЬ</span><h3>Мой день</h3></div><button type="button" data-view-target="planner">Все</button></div>
+        <div class="mini-agenda" id="mini-agenda"></div>
+      </section>
+
+      <section class="system-card glass">
+        <div class="system-state"><span class="system-orb"><i></i>✦</span><span><strong id="system-title">Система готова</strong><small id="system-subtitle">Планировщик работает</small></span></div>
+        <div class="capability-row"><span>GitHub API</span><b id="dep-github">—</b></div>
+        <div class="capability-row"><span>Свободный диалог</span><b id="dep-openai">—</b></div>
+        <div class="capability-row"><span>Голос</span><b id="dep-voice">—</b></div>
+        <label class="speech-row"><span><strong>Озвучивать ответы</strong><small>Speech Synthesis</small></span><input id="speech-toggle" type="checkbox" checked><i></i></label>
+        <label class="speech-row"><span><strong>Фраза пробуждения</strong><small id="wake-mode-state">Микрофон выключен</small></span><input id="wake-toggle" type="checkbox"><i></i></label>
+      </section>
+    </aside>
+  </div>
+
+  <dialog class="modal" id="item-dialog">
+    <form class="modal-shell" id="item-form">
+      <div class="modal-head"><div><span class="eyebrow">НОВАЯ ЗАПИСЬ</span><h2 id="item-dialog-title">Создать</h2></div><button type="button" data-close-dialog="item-dialog">×</button></div>
+      <div class="kind-picker">
+        <button type="button" data-kind="timer"><span class="violet">◷</span>Таймер</button>
+        <button type="button" data-kind="reminder"><span class="amber">♢</span>Напоминание</button>
+        <button type="button" data-kind="event"><span class="cyan">▦</span>Событие</button>
+        <button type="button" data-kind="note"><span class="rose">✎</span>Заметка</button>
+      </div>
+      <input id="item-kind" type="hidden" value="timer">
+      <div class="form-stack">
+        <label><span id="item-title-label">Название</span><input id="item-title" maxlength="160" placeholder="Например, сделать перерыв"></label>
+        <div class="duration-fields" id="duration-fields"><label><span>Длительность</span><input id="item-duration" type="number" min="1" max="44640" value="10"></label><label><span>Единица</span><select id="item-duration-unit"><option value="60">Минуты</option><option value="1">Секунды</option><option value="3600">Часы</option><option value="86400">Дни</option></select></label></div>
+        <label id="due-field" hidden><span>Дата и время</span><input id="item-due" type="datetime-local"></label>
+        <label id="details-field" hidden><span>Описание</span><textarea id="item-details" maxlength="4000" rows="3" placeholder="Дополнительные детали…"></textarea></label>
+      </div>
+      <div class="modal-actions"><button class="secondary-button" type="button" data-close-dialog="item-dialog">Отмена</button><button class="primary-button" id="save-item" type="submit">Создать</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="app-dialog">
+    <form class="modal-shell" id="app-form">
+      <div class="modal-head"><div><span class="eyebrow">БЕЗОПАСНЫЙ ЗАПУСК</span><h2>Добавить приложение</h2></div><button type="button" data-close-dialog="app-dialog">×</button></div>
+      <p class="modal-description">Укажите абсолютный путь к исполняемому файлу. Аргументы и shell-команды не поддерживаются.</p>
+      <div class="form-stack">
+        <label><span>Название</span><input id="app-name" maxlength="60" placeholder="Например, Figma" required></label>
+        <label><span>Исполняемый файл</span><input id="app-path" placeholder="C:\Program Files\App\app.exe или /usr/bin/app" required></label>
+      </div>
+      <div class="modal-actions"><button class="secondary-button" type="button" data-close-dialog="app-dialog">Отмена</button><button class="primary-button" id="save-app" type="submit">Добавить</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal settings-modal" id="settings-dialog">
+    <form class="modal-shell wide" id="settings-form">
+      <div class="modal-head"><div><span class="eyebrow">КОНФИГУРАЦИЯ</span><h2>Настройки Джинна</h2><p>API-ключи сохраняются только в локальном <code>.env</code> и никогда не возвращаются браузеру.</p></div><button type="button" data-close-dialog="settings-dialog">×</button></div>
+      <div class="settings-grid">
+        <section>
+          <span class="settings-number">01</span><h3>Интерфейс</h3><p>Автовыбор языка браузера или постоянный ручной выбор.</p>
+          <label><span>Язык</span><select id="setting-ui-language"><option value="auto">Авто — язык браузера</option><option value="ru">Русский</option><option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option><option value="fr">Français</option></select></label>
+        </section>
+        <section>
+          <span class="settings-number">02</span><h3>GitHub</h3><p>Репозиторий и fine-grained token.</p>
+          <label><span>Репозиторий</span><input id="setting-repo" placeholder="owner/repository"></label>
+          <label><span>GitHub-токен <em id="github-token-state"></em></span><input id="setting-github-token" type="password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять"></label>
+        </section>
+        <section class="provider-section">
+          <span class="settings-number">03</span><h3>AI-провайдеры</h3><p>Выберите активный сервис. Можно безопасно сохранить отдельный ключ для каждого провайдера.</p>
+          <label><span>Активный провайдер</span><select id="setting-ai-provider"><option value="openai">OpenAI</option><option value="gemini">Google Gemini</option><option value="anthropic">Anthropic Claude</option><option value="groq">Groq</option><option value="local">Ollama · Jinn</option><option value="custom">Другой / собственный</option></select></label>
+          <div class="provider-grid">
+            <fieldset data-provider-card="openai"><legend>OpenAI <em id="openai-key-state"></em></legend><label><span>API-ключ</span><input id="setting-openai-key" type="password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять"></label><label><span>Основная модель</span><input id="setting-openai-model"></label><label><span>Экономичная модель</span><input id="setting-openai-small-model"></label><label><span>Базовый URL</span><input id="setting-openai-base-url" type="url"></label></fieldset>
+            <fieldset data-provider-card="gemini"><legend>Google Gemini <em id="gemini-key-state"></em></legend><label><span>API-ключ</span><input id="setting-google-key" type="password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять"></label><label><span>Основная модель</span><input id="setting-gemini-model"></label><label><span>Экономичная модель</span><input id="setting-gemini-small-model"></label><label><span>Базовый URL</span><input id="setting-gemini-base-url" type="url"></label></fieldset>
+            <fieldset data-provider-card="anthropic"><legend>Anthropic Claude <em id="anthropic-key-state"></em></legend><label><span>API-ключ</span><input id="setting-anthropic-key" type="password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять"></label><label><span>Основная модель</span><input id="setting-anthropic-model"></label><label><span>Экономичная модель</span><input id="setting-anthropic-small-model"></label><label><span>Базовый URL</span><input id="setting-anthropic-base-url" type="url"></label></fieldset>
+            <fieldset data-provider-card="groq"><legend>Groq <em id="groq-key-state"></em></legend><label><span>API-ключ</span><input id="setting-groq-key" type="password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять"></label><label><span>Основная модель</span><input id="setting-groq-model"></label><label><span>Экономичная модель</span><input id="setting-groq-small-model"></label><label><span>Базовый URL</span><input id="setting-groq-base-url" type="url"></label></fieldset>
+            <fieldset data-provider-card="local"><legend>Локальная модель Jinn 1.5B <em id="local-model-state"></em></legend><p class="provider-note">Бесплатно и без облачного API-ключа. Требуется Ollama и локальная модель jinn.</p><label><span>Основная модель</span><input id="setting-ollama-model"></label><label><span>Экономичная модель</span><input id="setting-ollama-small-model"></label><label><span>Локальный URL Ollama</span><input id="setting-ollama-base-url" type="url" placeholder="http://127.0.0.1:11434/v1"></label></fieldset>
+            <fieldset data-provider-card="custom"><legend>Другой / собственный <em id="custom-key-state"></em></legend><label><span>API-ключ</span><input id="setting-custom-key" type="password" autocomplete="new-password" placeholder="Оставьте пустым, чтобы не менять"></label><label><span>Основная модель</span><input id="setting-custom-model"></label><label><span>Экономичная модель</span><input id="setting-custom-small-model"></label><label><span>Базовый URL</span><input id="setting-custom-base-url" type="url" placeholder="https://example.com/v1"></label></fieldset>
+          </div>
+        </section>
+        <section class="advanced-section">
+          <span class="settings-number">04</span><h3>Расширенная конфигурация AI</h3><p>Экономичный маршрут, параметры генерации и ограниченный поиск. Поисковые фрагменты считаются недоверенными данными.</p>
+          <label class="settings-check"><span>Всегда использовать экономичную модель</span><input id="setting-small-model-mode" type="checkbox"></label>
+          <div class="advanced-grid">
+            <label><span>Таймаут, секунд</span><input id="setting-ai-timeout" type="number" min="1" max="300" step="1"></label>
+            <label><span>Температура</span><input id="setting-ai-temperature" type="number" min="0" max="2" step="0.05"></label>
+            <label><span>Top P</span><input id="setting-ai-top-p" type="number" min="0.01" max="1" step="0.01"></label>
+            <label><span>Максимум токенов</span><input id="setting-ai-max-tokens" type="number" min="1" max="32768" step="1"></label>
+            <label><span>Штраф частоты</span><input id="setting-ai-frequency-penalty" type="number" min="-2" max="2" step="0.1"></label>
+            <label><span>Результатов поиска</span><input id="setting-search-results" type="number" min="1" max="8" step="1"></label>
+          </div>
+          <label class="settings-check"><span>Разрешить локальной Jinn искать в интернете</span><input id="setting-web-search" type="checkbox"></label>
+        </section>
+        <section class="appearance-section">
+          <span class="settings-number">05</span><h3>Оформление</h3><p>Эти предпочтения хранятся только в вашем браузере.</p>
+          <label><span>Тема</span><select id="setting-theme"><option value="system">Как в системе</option><option value="dark">Тёмная</option><option value="light">Светлая</option></select></label>
+          <label><span>Акцент</span><select id="setting-accent"><option value="violet">Фиолетовый</option><option value="cyan">Голубой</option><option value="amber">Янтарный</option></select></label>
+          <label><span>Плотность</span><select id="setting-density"><option value="comfortable">Комфортная</option><option value="compact">Компактная</option></select></label>
+          <label><span>Анимация</span><select id="setting-motion"><option value="system">Как в системе</option><option value="reduced">Сокращённая</option></select></label>
+        </section>
+        <section>
+          <span class="settings-number">06</span><h3>Фоновый голос</h3><p>Выберите язык соответствующей модели Vosk, фразы пробуждения и голос TTS.</p>
+          <label><span>Язык распознавания</span><select id="setting-voice-language"><option value="ru-RU">Русский</option><option value="en-US">English</option><option value="de-DE">Deutsch</option><option value="es-ES">Español</option><option value="fr-FR">Français</option></select></label>
+          <label><span>Фразы пробуждения</span><input id="setting-wake-words" placeholder="Через запятую"></label>
+          <label><span>Путь к модели Vosk</span><input id="setting-vosk"></label>
+          <label><span>Голос TTS</span><input id="setting-tts"></label>
+        </section>
+      </div>
+      <div class="modal-actions"><span class="branch-lock">⌾ Запись GitHub только в <code>main</code></span><button class="secondary-button" type="button" data-close-dialog="settings-dialog">Отмена</button><button class="primary-button" id="save-settings" type="submit">Сохранить</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+</body>
+</html>

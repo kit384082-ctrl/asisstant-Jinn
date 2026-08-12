@@ -1,0 +1,6 @@
+[lint]
+extend-select = ["S"]
+
+[lint.per-file-ignores]
+# Unit tests intentionally use assertions and make requests only to their own loopback server.
+"tests/*" = ["S101", "S310"]

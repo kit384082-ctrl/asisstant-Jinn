@@ -1,77 +1,296 @@
-# Genie: GitHub Voice Assistant
+# Джинн — локальный персональный агент
 
-Genie is a Python-based voice assistant designed to help you interact with your GitHub repository using voice commands. It listens for the wake word "Джинн" (Genie in Russian), accepts Russian voice commands, performs actions directly on your configured GitHub repository's `main` branch, and responds in English.
+Джинн — кроссплатформенный локальный помощник с современным веб-интерфейсом на русском, английском, немецком, испанском и французском языках. Он ставит таймеры, хранит напоминания, события и заметки, запускает разрешённые локальные приложения, поддерживает свободный диалог через выбранного AI-провайдера и сохраняет возможности GitHub-ассистента.
 
-## Features
+> Любая запись в GitHub жёстко ограничена веткой `main`: приложение не создаёт ветки и не переключается между ними.
 
-- **Wake Word Detection:** Uses Vosk for lightweight, offline detection of the wake word "Джинн".
-- **Russian Speech-to-Text (STT):** Converts your Russian voice commands into text using Vosk.
-- **Intent Parsing:** Uses OpenAI's LLM to intelligently parse your commands into actionable GitHub intents.
-- **GitHub Integration:**
-  - Check unread notifications.
-  - Check active issues and pull requests.
-  - Check the status of recent GitHub Actions workflow runs.
-  - Get a summary of recent commits.
-  - **Append text to files directly on the `main` branch.**
-- **English Text-to-Speech (TTS):** Uses `edge-tts` for natural-sounding English responses, with an offline fallback to `pyttsx3`.
+## Возможности
 
-## Prerequisites
+### Личный помощник
 
-1. **Python 3.8+**
-2. **System Dependencies:**
-   - On Linux, you may need `portaudio19-dev` and `python3-pyaudio python3-pygame` for the `sounddevice` library.
-     `sudo apt-get install portaudio19-dev`
-   - On Windows, `sounddevice` usually works out of the box.
-   - For `edge-tts` playback, a system audio player using `pygame`. `pygame` is included in requirements.txt.
-3. **Vosk Model:**
-   - Download a small Russian Vosk model from [Vosk Models](https://alphacephei.com/vosk/models).
-   - Recommended: `vosk-model-small-ru-0.22.zip`
-   - Extract the zip file and place the extracted folder in the project directory, renaming it to `model` (or configure the path in `.env`).
+- таймеры, напоминания, календарные события и заметки;
+- локальное хранение в SQLite с экспортом событий и напоминаний в `.ics`;
+- естественные команды на русском, английском, немецком, испанском и французском без обязательного подключения к LLM;
+- браузерные уведомления и безопасные нативные уведомления, пока Python-сервис запущен;
+- встроенный набор приложений: браузер, файловый менеджер, терминал, калькулятор, текстовый редактор, VS Code, Telegram и Discord — только если они доступны в системе;
+- добавление собственных приложений по **абсолютному пути к исполняемому файлу**;
+- запуск процессов через массив аргументов без `shell=True` и без пользовательских shell-команд;
+- свободный диалог через OpenAI, Google Gemini, Anthropic Claude, Groq, собственный OpenAI-совместимый API или бесплатную локальную модель **Jinn 1.5B** через Ollama; локальный профиль не требует облачного ключа;
+- локальная Jinn умеет вызывать только два ограниченных инструмента: запуск зарегистрированного приложения (лишь из локального браузера) и опциональный безопасный веб-поиск без загрузки страниц результатов.
 
-## Setup Instructions
+### GitHub-ассистент
 
-1. **Clone the repository:**
-   `git clone <your-repository-url>`
-   `cd <repository-directory>`
+- просмотр непрочитанных уведомлений, issues и pull request’ов;
+- состояние последнего GitHub Actions workflow в `main`;
+- сводка последних коммитов из `main`;
+- безопасное добавление UTF-8 текста в файл в `main`;
+- строгая проверка путей и прав токена.
 
-2. **Install dependencies:**
-   `pip install -r requirements.txt`
+### Интерфейс и голос
 
-3. **Configure Environment Variables:**
-   - Copy the `.env.example` file to `.env`:
-     `cp .env.example .env`
-   - Edit `.env` and fill in your credentials:
-     - `GITHUB_TOKEN`: Your GitHub Personal Access Token (PAT). Ensure it has `repo` permissions to read and write to the repository.
-     - `GITHUB_REPO`: The target repository in the format `owner/repo` (e.g., `octocat/Hello-World`).
-     - `OPENAI_API_KEY`: Your OpenAI API Key for intent parsing.
-     - `VOSK_MODEL_PATH`: Path to the extracted Vosk model (default is `model`).
+- адаптивные разделы «Диалог», «Планировщик», «Приложения» и «GitHub»;
+- календарь, живые таймеры, быстрые действия, статусы и расширенные настройки AI;
+- локальные для браузера темы (системная/тёмная/светлая), цветовой акцент, плотность интерфейса и сокращение анимации;
+- автоматический выбор языка браузера и постоянный ручной переключатель RU/EN/DE/ES/FR;
+- локализованные динамические подписи, календарь, уведомления, ответы и голосовые настройки;
+- голосовой ввод и фраза пробуждения через Speech Recognition API, пока веб-приложение открыто;
+- озвучивание через Speech Synthesis API на выбранном языке;
+- кинематографические световые волны, частицы, parallax/3D-эффекты и заметная индикация прослушивания с поддержкой `prefers-reduced-motion`;
+- устанавливаемое PWA-приложение и отдельный фоновый voice-only режим с Vosk/TTS и многоязычными фразами пробуждения.
 
-## Running the Assistant
+## Быстрый запуск
 
-Run the main script:
+Требуется Python 3.10 или новее. На Linux и macOS рекомендуемый установщик подготовит Ollama, скачает внешние базовые веса, соберёт локальную модель `jinn`, создаст `.venv`, установит зависимости и безопасный `.env`:
 
-`python main.py`
+```bash
+./scripts/install-jinn.sh
+.venv/bin/python main.py
+```
 
-1. Wait for the initialization (loading the model and connecting to GitHub).
-2. Once you hear "Genie is online and ready," the assistant is listening in the background.
-3. Say "Джинн" to wake it up.
-4. Wait for it to reply "Yes, master?".
-5. Speak your command in Russian. For example:
-   - "Проверь мои уведомления" (Check my notifications)
-   - "Добавь в файл notes.md купить молоко" (Add 'buy milk' to notes.md file)
-   - "Какие последние коммиты?" (What are the recent commits?)
-6. Genie will execute the action on the `main` branch and speak the result back to you in English.
+Полезные режимы: `--dry-run` только показывает действия, `--skip-ollama-install` требует уже установленный Ollama, а `--skip-python` пропускает Python-окружение. Скрипт всегда создаёт модель с именем `jinn`; веса хранятся Ollama вне Git. На macOS используется Homebrew, если он доступен, иначе установщик выдаёт ссылку на подписанный пакет Ollama.
 
-## Architecture
+Для ручной установки или Windows:
 
-- `main.py`: Entry point and main event loop.
-- `core/wake_word.py`: Microphone listening and wake word detection using Vosk.
-- `core/stt_tts.py`: Speech recognition (Vosk) and speech synthesis (edge-tts / pyttsx3).
-- `github_service/client.py`: GitHub API client using PyGithub. Enforces operations on `main`.
-- `github_service/intents.py`: Uses OpenAI to parse transcribed Russian text into JSON commands.
-- `config.py`: Configuration loader and validator.
+```bash
+python -m venv .venv
 
-## Limitations & Notes
-- The assistant is hardcoded to only operate on the `main` branch to prevent accidental branch creation or switching, as per the requirements.
-- The `sounddevice` library requires exclusive access to your microphone.
-- Natural sounding TTS requires an active internet connection for `edge-tts`.
+# Linux/macOS
+source .venv/bin/activate
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+```
+
+Создайте локальную конфигурацию:
+
+```bash
+# Linux/macOS
+cp .env.example .env
+
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+Для таймеров, календаря, заметок и встроенных приложений токены не нужны. Для GitHub заполните:
+
+```dotenv
+GITHUB_TOKEN=your_github_token_here
+GITHUB_REPO=owner/repository
+```
+
+Запустите Джинна:
+
+```bash
+python main.py
+```
+
+Откроется `http://127.0.0.1:8765`. GitHub, язык, голос и все AI-провайдеры можно настроить в интерфейсе. Секреты сохраняются только в локальном `.env`, исключённом из Git; публичные ответы `/api/status` и `/api/settings` возвращают лишь признаки наличия ключей, но никогда не их значения. Пустое поле ключа при сохранении означает «оставить существующий ключ».
+
+### Параметры GUI
+
+```bash
+python main.py --no-browser              # не открывать браузер автоматически
+python main.py --port 8080
+python main.py --port 0                   # выбрать свободный порт
+python main.py --host 0.0.0.0 --port 8080
+```
+
+По умолчанию сервер слушает только loopback. При использовании `0.0.0.0` публикуйте интерфейс лишь в доверенной сети и через HTTPS. Из удалённого браузера настройка секретов, добавление и запуск приложений блокируются; эти операции доступны только через `localhost`/`127.0.0.1`.
+
+## Примеры команд
+
+### Личный агент
+
+| Пример | Действие |
+|---|---|
+| `Поставь таймер на 10 минут` | создать таймер |
+| `Поставь таймер на 25 минут для фокусировки` | создать именованный таймер |
+| `Напомни через 20 минут позвонить маме` | относительное напоминание |
+| `Напомни завтра в 09:00 проверить почту` | напоминание по дате и времени |
+| `Добавь в календарь встречу завтра в 14:30` | создать событие |
+| `Создай заметку: идея для проекта` | сохранить заметку |
+| `Покажи список напоминаний` | показать ближайшие записи и их номера |
+| `Отметь как выполненную запись #12` | завершить запись |
+| `Удали таймер #7` | удалить запись |
+| `Открой калькулятор` | открыть встроенное приложение |
+| `Открой приложение Figma` | открыть добавленное приложение |
+| `Который час?` | локальный ответ без сети |
+
+Те же локальные намерения распознаются на остальных языках, например: `Set a timer for 10 minutes`, `Erinnere mich in 20 Minuten anzurufen`, `Crea una nota: idea del proyecto`, `Ouvre la calculatrice`. Язык запроса передаётся локальному маршрутизатору и AI-провайдеру вместе с соответствующей системной инструкцией.
+
+Формы в планировщике позволяют создавать, завершать и удалять все типы записей без голосовой команды. Нажатие на день календаря открывает форму события. Ссылка «Экспортировать календарь .ics» выгружает напоминания и события для импорта в системный календарь.
+
+### GitHub
+
+| Пример | Действие |
+|---|---|
+| `Проверь уведомления` | непрочитанные уведомления GitHub |
+| `Покажи открытые задачи` | последние issues |
+| `Какие pull request’ы открыты?` | последние PR |
+| `Проверь GitHub Actions` | последний workflow в `main` |
+| `Покажи последние коммиты` | последние три коммита |
+| `Добавь в файл notes.md купить молоко` | добавить строку в `notes.md` в `main` |
+
+Стандартные команды разбираются локально. Неизвестная фраза направляется активному AI-провайдеру только при наличии ключа его профиля; GitHub-команды продолжают использовать детерминированный безопасный маршрут.
+
+## Приложения и безопасность запуска
+
+Встроенные приложения определяются отдельно для Windows, macOS и Linux. Недоступные программы отображаются неактивными. Собственную программу можно добавить в разделе «Приложения»:
+
+1. укажите понятное название;
+2. укажите абсолютный путь к `.exe`, исполняемому файлу или `.app` на macOS;
+3. сохраните программу и запускайте кнопкой либо командой `Открой <название>`.
+
+Аргументы командной строки, конвейеры, перенаправления и shell-выражения намеренно не принимаются. Путь проверяется перед сохранением и повторно перед запуском. Запуск работает на том компьютере, где запущен `python main.py`; облачный предпросмотр не может открыть программы на пользовательском ПК.
+
+## Данные, календарь и уведомления
+
+По умолчанию личные данные находятся в `.genie/agent.db`. Каталог исключён из Git; на POSIX-системах созданный Джинном каталог получает режим `0700`, база — `0600`. Разрешения уже существующего пользовательского каталога не меняются. Путь можно изменить через `AGENT_DATA_PATH`.
+
+Для резервного копирования остановите Джинна и скопируйте файл базы. SQLite работает в WAL-режиме, поэтому не копируйте один `agent.db` во время активной записи без SQLite-aware backup.
+
+Уведомления доставляются двумя способами:
+
+- **браузер:** нажмите «Уведомления» в боковой панели и разрешите их для локального адреса;
+- **нативно:** Linux использует `notify-send`, macOS — `osascript`, Windows — встроенный PowerShell/Windows Runtime toast.
+
+Текст уведомления передаётся без shell-интерполяции; на Windows он кодируется перед формированием скрипта toast. Планировщик и нативные уведомления работают, только пока Python-процесс Джинна запущен.
+
+## Свободный диалог и AI-провайдеры
+
+Ключ AI необязателен. Без него Джинн продолжает выполнять таймеры, напоминания, календарь, заметки, запуск приложений и детерминированные GitHub-команды. Активный профиль задаётся через `AI_PROVIDER` или в настройках:
+
+| `AI_PROVIDER` | Ключ | Модель / endpoint |
+|---|---|---|
+| `openai` | `OPENAI_API_KEY` | `OPENAI_MODEL`, `OPENAI_SMALL_MODEL`, `OPENAI_BASE_URL` |
+| `gemini` | `GOOGLE_API_KEY` | `GEMINI_MODEL`, `GEMINI_SMALL_MODEL`, `GEMINI_BASE_URL` |
+| `anthropic` | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL`, `ANTHROPIC_SMALL_MODEL`, `ANTHROPIC_BASE_URL` |
+| `groq` | `GROQ_API_KEY` | `GROQ_MODEL`, `GROQ_SMALL_MODEL`, `GROQ_BASE_URL` |
+| `local` | не нужен | `OLLAMA_MODEL`, `OLLAMA_SMALL_MODEL`, `OLLAMA_BASE_URL` |
+| `custom` | `CUSTOM_API_KEY` | `CUSTOM_MODEL`, `CUSTOM_SMALL_MODEL`, `CUSTOM_BASE_URL` |
+
+Пример:
+
+```dotenv
+AI_PROVIDER=gemini
+GOOGLE_API_KEY=...
+GEMINI_MODEL=gemini-2.0-flash
+```
+
+### Бесплатная локальная Jinn 1.5B
+
+Рекомендуемый способ на Linux/macOS:
+
+```bash
+./scripts/install-jinn.sh
+```
+
+Установщик загружает внешнюю `qwen2.5:1.5b` через Ollama и выполняет `ollama create jinn -f ollama/Modelfile`. `Modelfile` задаёт имя и системную идентичность Jinn, поэтому собранный помощник не представляется Qwen. Базовые веса остаются в системном хранилище Ollama и никогда не копируются в репозиторий.
+
+При ручной установке:
+
+```bash
+ollama pull qwen2.5:1.5b
+ollama create jinn -f ollama/Modelfile
+ollama serve  # не требуется, если приложение/служба Ollama уже запущены
+```
+
+Выберите **Ollama · Jinn** в настройках либо задайте:
+
+```dotenv
+AI_PROVIDER=local
+OLLAMA_MODEL=jinn
+OLLAMA_SMALL_MODEL=jinn
+OLLAMA_BASE_URL=http://127.0.0.1:11434/v1
+```
+
+Модель бесплатна и не требует облачного API-ключа; предусмотрите около 1 ГБ диска и несколько гигабайт оперативной памяти. Для локального профиля разрешены только loopback-адреса (`127.0.0.1`, `::1` или `localhost`), поэтому промпты нельзя случайно отправить удалённому Ollama. Если сервис недоступен, API и интерфейс возвращают локализованную ошибку с конкретной командой восстановления; таймеры и остальные встроенные функции продолжают работать.
+
+Только локальная Jinn получает инструменты. Запуск принимает исключительно alias встроенного или зарегистрированного приложения, не принимает путь, аргументы, URL или shell-команду и отключён для удалённого браузера. Веб-поиск выключен по умолчанию. После включения `WEB_SEARCH_ENABLED` он обращается только к фиксированному поисковому endpoint, ограничивает запрос, ответ и число результатов, не загружает найденные страницы и помечает заголовки/фрагменты как недоверенные данные. Ответ включает проверенные публичные HTTP(S)-ссылки на источники.
+
+OpenAI, Groq, `local` и `custom` используют OpenAI-совместимый клиент; Gemini и Anthropic вызываются через их HTTPS API без дополнительных SDK. Для облачных endpoint требуется HTTPS; URL с учётными данными, query/fragment, внутренними доменами и частными IP блокируются. Исключение — явно указанный loopback custom endpoint для локальной разработки. Нативные запросы Gemini/Anthropic не следуют редиректам, чтобы не перенести ключ на другой origin.
+
+История свободного диалога ограничена 12 сообщениями, хранится только в памяти и очищается при смене провайдера, модели, ключа, endpoint или языка. Личные записи из SQLite автоматически провайдеру не отправляются. Настройки позволяют задать основную и экономичную модель для каждого провайдера, глобально включить экономичный маршрут, а также ограниченные таймаут, temperature, top-p, максимум токенов и frequency penalty.
+
+## Голос и фразы пробуждения
+
+### В браузере
+
+Кнопка микрофона запускает разовый голосовой ввод. Переключатель «Фраза пробуждения» поддерживает непрерывное ожидание, пока страница открыта. Распознавание использует текущий язык интерфейса и локализованные фразы по умолчанию: «Джинн», “Genie”, „Dschinni“, «Genio» и «Génie». Доступность фонового распознавания зависит от реализации Speech Recognition в браузере; операционная система может приостановить закрытую или выгруженную вкладку.
+
+### Voice-only на компьютере
+
+Для режима без открытого браузера:
+
+1. скачайте модель нужного языка с [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models);
+2. распакуйте её и задайте путь в `VOSK_MODEL_PATH`;
+3. укажите совпадающий locale, например `VOICE_LANGUAGE=de-DE`;
+4. при необходимости задайте через запятую `WAKE_WORDS` и подходящий голос `TTS_VOICE`;
+5. запустите `python main.py --voice-only`.
+
+Команды после фразы пробуждения проходят через тот же личный агент и AI-провайдер, что и GUI. По умолчанию используются фразы выбранного языка. На Linux для голосовых библиотек могут потребоваться системные пакеты:
+
+```bash
+sudo apt install portaudio19-dev espeak-ng
+```
+
+## Настройки
+
+| Переменная | Обязательна | Значение по умолчанию |
+|---|---:|---|
+| `GITHUB_TOKEN` | только для GitHub | — |
+| `GITHUB_REPO` | только для GitHub | — |
+| `AI_PROVIDER` | нет | `openai` |
+| `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_SMALL_MODEL` | нет | —, OpenAI URL, `gpt-4o-mini` |
+| `GOOGLE_API_KEY`, `GEMINI_BASE_URL`, `GEMINI_MODEL`, `GEMINI_SMALL_MODEL` | нет | —, Gemini URL, `gemini-2.0-flash`, `gemini-2.0-flash-lite` |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`, `ANTHROPIC_SMALL_MODEL` | нет | —, Anthropic URL, `claude-3-5-haiku-latest` |
+| `GROQ_API_KEY`, `GROQ_BASE_URL`, `GROQ_MODEL`, `GROQ_SMALL_MODEL` | нет | —, Groq URL, `llama-3.3-70b-versatile`, `llama-3.1-8b-instant` |
+| `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_SMALL_MODEL` | только для локального AI | loopback Ollama URL, `jinn`, `jinn` |
+| `CUSTOM_API_KEY`, `CUSTOM_BASE_URL`, `CUSTOM_MODEL`, `CUSTOM_SMALL_MODEL` | нет | — |
+| `AI_SMALL_MODEL_MODE` | нет | `false` |
+| `AI_REQUEST_TIMEOUT` | нет | `30` (1–300 секунд) |
+| `AI_TEMPERATURE`, `AI_TOP_P`, `AI_MAX_TOKENS`, `AI_FREQUENCY_PENALTY` | нет | `0.35`, `0.9`, `1200`, `0` |
+| `WEB_SEARCH_ENABLED`, `WEB_SEARCH_MAX_RESULTS` | нет | `false`, `5` (1–8) |
+| `UI_LANGUAGE` | нет | `auto` (`ru`, `en`, `de`, `es`, `fr`) |
+| `VOICE_LANGUAGE` | нет | `ru-RU` |
+| `WAKE_WORDS` | нет | фразы выбранного языка |
+| `AGENT_DATA_PATH` | нет | `.genie/agent.db` |
+| `VOSK_MODEL_PATH` | для `--voice-only` | `model` |
+| `TTS_VOICE` | нет | голос для `VOICE_LANGUAGE` |
+| `GUI_HOST` | нет | `127.0.0.1` |
+| `GUI_PORT` | нет | `8765` |
+
+Fine-grained GitHub token должен иметь доступ к выбранному репозиторию. Для чтения достаточно соответствующих read permissions; для добавления текста требуется `Contents: Read and write`.
+
+## Тесты и проверка
+
+```bash
+python -m unittest discover -s tests -v
+ruff format --check . --exclude .venv
+ruff check . --exclude .venv
+node --check web/i18n.js && node --check web/app.js
+```
+
+Тесты покрывают маршрутизацию GitHub, HTTP-границы и rate limit, конфигурацию и сокрытие ключей, проверку endpoint и числовых ограничений, профили AI-провайдеров, локальные model tools и безопасный веб-поиск, хранение agenda, конкурентную выдачу уведомлений, многоязычные команды и фразы пробуждения, ICS, безопасный запуск приложений и Windows toast encoding.
+
+## Архитектура
+
+```text
+main.py                    CLI: GUI или voice-only
+gui_server.py              локальный HTTP API, безопасность и раздача GUI
+personal_agent.py          SQLite, планировщик, приложения, уведомления и ICS
+conversation.py            многоязычный диалог, Jinn identity и ограниченные model tools
+web_search.py              фиксированный безопасный поиск без загрузки страниц результатов
+errors.py                  структурированные локализованные ошибки и решения
+assistant.py               выполнение GitHub intent’ов и ответы
+config.py                  проверка endpoint и атомарное сохранение приватного .env
+scripts/install-jinn.sh     Linux/macOS: Ollama, модель jinn и Python-окружение
+ollama/Modelfile            идентичность Jinn поверх внешних весов в Ollama
+web/                       адаптивный PWA-интерфейс
+github_service/client.py   безопасная работа с GitHub API
+github_service/intents.py  локальный и LLM-разбор GitHub-команд
+core/wake_word.py          микрофон и ключевое слово
+core/stt_tts.py            Vosk STT и TTS с fallback
+```
