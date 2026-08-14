@@ -13,7 +13,7 @@ try:
     from github.GithubException import GithubException
 except ImportError:  # Lets the setup GUI start before requirements are installed.
     Auth = None  # type: ignore[assignment]
-    Github = None  # type: ignore[assignment]
+    Github = None  # type: ignore[assignment,misc]
 
     class GithubException(Exception):  # type: ignore[no-redef]
         status = 0
@@ -60,6 +60,7 @@ class GitHubClient:
         """Fetch up to five unread notifications from all repositories."""
 
         notifications: list[dict[str, Any]] = []
+        assert self.g is not None
         items = self.g.get_user().get_notifications(all=False, participating=False)
         for notification in items:
             notifications.append(
@@ -115,7 +116,7 @@ class GitHubClient:
     def get_latest_action_status(self) -> str:
         """Return the latest workflow status on main."""
 
-        runs = self.repo.get_workflow_runs(branch=self.branch)
+        runs = self.repo.get_workflow_runs(branch=self.repo.get_branch(self.branch))
         if runs.totalCount == 0:
             return "Запуски GitHub Actions в ветке main не найдены."
         run = runs[0]
