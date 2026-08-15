@@ -41,7 +41,7 @@ class AssistantControllerTests(unittest.TestCase):
         self.conversation = FakeConversation()
         self.controller = AssistantController(
             personal_agent=self.personal,
-            conversation=self.conversation,
+            conversation=self.conversation,  # type: ignore
         )
 
     def tearDown(self) -> None:
