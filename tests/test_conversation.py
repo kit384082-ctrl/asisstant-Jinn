@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -252,7 +253,7 @@ class ConversationServiceTests(unittest.TestCase):
         ]
         sent: list[list[dict[str, str]]] = []
 
-        def reply(_settings, messages, *, allow_local_apps=False):
+        def reply(_settings: dict[str, Any], messages: list[dict[str, str]], *, allow_local_apps: bool = False) -> tuple[str, list[dict[str, str]]]:
             sent.append(messages)
             return "answer", []
 
