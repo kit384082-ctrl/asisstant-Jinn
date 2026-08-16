@@ -7,9 +7,10 @@ from unittest.mock import patch
 
 from gui_server import AssistantController
 from personal_agent import PersonalAgent
+from conversation import ConversationService
 
 
-class FakeConversation:
+class FakeConversation(ConversationService):
     def __init__(self) -> None:
         self.messages: list[str] = []
         self.languages: list[str] = []
