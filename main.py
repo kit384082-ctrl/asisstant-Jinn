@@ -27,6 +27,11 @@ def run_gui(host: str, port: int, *, open_browser: bool = True) -> int:
         return 1
 
     actual_host, actual_port = server.server_address[:2]
+    # In some environments, actual_host can be bytes.
+    if isinstance(actual_host, bytes):
+        actual_host = actual_host.decode()
+    if isinstance(actual_port, bytes):
+        actual_port = int(actual_port.decode())
     # This compares an already-bound address; it does not open a listener.
     browser_host = (
         "127.0.0.1"
