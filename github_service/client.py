@@ -60,6 +60,8 @@ class GitHubClient:
         """Fetch up to five unread notifications from all repositories."""
 
         notifications: list[dict[str, Any]] = []
+        if not self.g:
+            return notifications
         items = self.g.get_user().get_notifications(all=False, participating=False)
         for notification in items:
             notifications.append(

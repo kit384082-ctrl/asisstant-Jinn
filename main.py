@@ -33,7 +33,8 @@ def run_gui(host: str, port: int, *, open_browser: bool = True) -> int:
         if actual_host in {"0.0.0.0", "::"}  # noqa: S104 - comparison only.
         else actual_host
     )
-    url = f"http://{browser_host}:{actual_port}"
+    browser_host_str = browser_host.decode("utf-8") if isinstance(browser_host, bytes) else browser_host
+    url = f"http://{browser_host_str}:{actual_port}"
     logger.info("Веб-интерфейс Джинна доступен по адресу %s", url)
     logger.info("Для остановки нажмите Ctrl+C")
     if open_browser:
