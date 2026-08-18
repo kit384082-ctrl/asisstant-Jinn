@@ -33,7 +33,7 @@ class PersonalAgentTests(unittest.TestCase):
         self.agent = PersonalAgent(
             self.database,
             start_scheduler=False,
-            notifier=self.notifier,
+            notifier=self.notifier,  # type: ignore[arg-type]
         )
 
     def tearDown(self) -> None:
@@ -98,7 +98,7 @@ class PersonalAgentTests(unittest.TestCase):
         self.assertEqual(first[0]["item_id"], item["id"])
         self.assertEqual(self.notifier.messages, [("Таймер завершён", "Перерыв")])
 
-    def test_concurrent_due_collection_does_not_duplicate(self):
+    def test_concurrent_due_collection_does_not_duplicate(self) -> None:
         self.agent.store.create_item(
             "reminder",
             "Одно уведомление",
@@ -121,23 +121,31 @@ class PersonalAgentTests(unittest.TestCase):
         self.assertEqual(sum(len(result) for result in results), 1)
         self.assertEqual(len(self.agent.store.list_notifications()), 1)
 
-    def test_russian_commands_create_list_complete_and_delete(self):
+    def test_russian_commands_create_list_complete_and_delete(self) -> None:
         timer = self.agent.try_execute("Поставь таймер на 2 минуты для чая")
         reminder = self.agent.try_execute("Напомни через 20 минут позвонить маме")
         note = self.agent.try_execute("Создай заметку: идея для проекта")
+
+        assert timer is not None
+        assert reminder is not None
+        assert note is not None
 
         self.assertEqual(timer["intent"]["action"], "create_timer")
         self.assertEqual(timer["item"]["title"], "чая")
         self.assertEqual(reminder["intent"]["action"], "create_reminder")
         self.assertEqual(note["intent"]["action"], "create_note")
         listed = self.agent.try_execute("Покажи список заметок")
+
+        assert listed is not None
         self.assertIn("идея для проекта", listed["response"])
 
         note_id = note["item"]["id"]
         completed = self.agent.try_execute(f"Отметь как выполненную запись #{note_id}")
+        assert completed is not None
         self.assertEqual(completed["intent"]["action"], "complete_item")
         timer_id = timer["item"]["id"]
         deleted = self.agent.try_execute(f"Удали таймер #{timer_id}")
+        assert deleted is not None
         self.assertEqual(deleted["intent"]["action"], "delete_item")
 
     def test_localized_timer_commands_use_clean_default_titles(self):
