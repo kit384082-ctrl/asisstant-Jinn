@@ -614,10 +614,10 @@ class Config:
         assignment = re.compile(r"^(\s*)(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=")
         for line in lines:
             match = assignment.match(line)
-            key = match.group(2) if match else None
-            if key in pending:
-                output.append(f"{key}={_quote_env(pending.pop(key))}")
-            elif key in requested_keys:
+            match_key = match.group(2) if match else None
+            if match_key in pending:
+                output.append(f"{match_key}={_quote_env(pending.pop(match_key))}")
+            elif match_key in requested_keys:
                 continue
             else:
                 output.append(line)
