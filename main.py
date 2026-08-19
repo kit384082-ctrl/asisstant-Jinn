@@ -26,7 +26,9 @@ def run_gui(host: str, port: int, *, open_browser: bool = True) -> int:
         logger.error("Не удалось запустить GUI на %s:%s: %s", host, port, exc)
         return 1
 
-    actual_host, actual_port = server.server_address[:2]
+    actual_host_val, actual_port_val = server.server_address[:2]
+    actual_host = actual_host_val.decode("utf-8") if isinstance(actual_host_val, bytes) else str(actual_host_val)
+    actual_port = actual_port_val.decode("utf-8") if isinstance(actual_port_val, bytes) else str(actual_port_val)
     # This compares an already-bound address; it does not open a listener.
     browser_host = (
         "127.0.0.1"
