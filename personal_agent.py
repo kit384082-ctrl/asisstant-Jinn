@@ -583,7 +583,7 @@ class AppLauncher:
                 if program_files_x86 is not None
                 else None,
             )
-            candidates = {
+            candidates_win: dict[str, tuple[Path, ...]] = {
                 "vscode": tuple(path for path in vscode_paths if path is not None),
                 "telegram": (
                     (roaming / "Telegram Desktop" / "Telegram.exe",)
@@ -601,10 +601,10 @@ class AppLauncher:
                     else ()
                 ),
             }
-            executable = self._first_existing(candidates.get(alias, ()))
-            return [executable] if executable else None
+            executable_path = self._first_existing(candidates_win.get(alias, ()))
+            return [executable_path] if executable_path else None
         if system == "Darwin":
-            applications = {
+            applications: dict[str, tuple[str, Path]] = {
                 "files": ("Finder", Path("/System/Library/CoreServices/Finder.app")),
                 "terminal": (
                     "Terminal",
@@ -627,7 +627,7 @@ class AppLauncher:
                 return None
             return ["open", "-a", definition[0]]
 
-        candidates = {
+        candidates_linux: dict[str, tuple[str, ...]] = {
             "files": ("xdg-open",),
             "terminal": ("x-terminal-emulator", "gnome-terminal", "konsole", "xterm"),
             "calculator": ("gnome-calculator", "kcalc", "galculator"),
@@ -636,7 +636,7 @@ class AppLauncher:
             "telegram": ("telegram-desktop", "telegram"),
             "discord": ("discord",),
         }
-        command = self._first_available(candidates.get(alias, ()))
+        command = self._first_available(candidates_linux.get(alias, ()))
         if not command:
             return None
         return [command, home] if alias == "files" else [command]
@@ -1475,13 +1475,15 @@ class PersonalAgent:
                     "Укажите длительность таймера, например «на 10 минут»."
                 )
             seconds, duration_fragment = parsed_duration
+            timer_match = re.search(
+                r"(?:поставь|установи|запусти|создай)?\s*таймер",
+                original,
+                re.IGNORECASE,
+            )
+            timer_text = timer_match.group(0) if timer_match else "таймер"
             label = self._strip_command_parts(
                 original,
-                re.search(
-                    r"(?:поставь|установи|запусти|создай)?\s*таймер",
-                    original,
-                    re.IGNORECASE,
-                ).group(0),
+                timer_text,
                 duration_fragment,
             )
             label = re.sub(r"^(?:(?:на|для)\s+)+", "", label, flags=re.IGNORECASE)

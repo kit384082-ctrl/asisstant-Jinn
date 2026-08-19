@@ -5,11 +5,12 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from conversation import ConversationService
 from gui_server import AssistantController
 from personal_agent import PersonalAgent
 
 
-class FakeConversation:
+class FakeConversation(ConversationService):
     def __init__(self) -> None:
         self.messages: list[str] = []
         self.languages: list[str] = []
