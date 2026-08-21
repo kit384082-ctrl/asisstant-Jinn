@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import unittest
 from types import SimpleNamespace
+from typing import Any
 
 from github_service.intents import IntentParser
 
 
 class FakeCompletions:
-    def __init__(self, content: str):
+    def __init__(self, content: str) -> None:
         self.content = content
-        self.calls = []
+        self.calls: list[dict[str, Any]] = []
 
-    def create(self, **kwargs):
+    def create(self, **kwargs: Any) -> Any:
         self.calls.append(kwargs)
         message = SimpleNamespace(content=self.content)
         return SimpleNamespace(choices=[SimpleNamespace(message=message)])
