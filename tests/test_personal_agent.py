@@ -16,7 +16,7 @@ from personal_agent import AgendaStore, AppLauncher, DesktopNotifier, PersonalAg
 UTC = timezone.utc
 
 
-class FakeNotifier:
+class FakeNotifier(DesktopNotifier):
     def __init__(self) -> None:
         self.messages: list[tuple[str, str]] = []
 
