@@ -4,6 +4,7 @@ import json
 import sys
 import unittest
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import Mock, patch
 
 from conversation import ConversationService, _NoProviderRedirects
@@ -220,7 +221,7 @@ class ConversationServiceTests(unittest.TestCase):
         ):
             service._active_settings()
 
-    def test_provider_reply_keeps_bounded_context(self):
+    def test_provider_reply_keeps_bounded_context(self) -> None:
         service = ConversationService()
         completion = Mock()
         completion.chat.completions.create.return_value = SimpleNamespace(
@@ -238,7 +239,7 @@ class ConversationServiceTests(unittest.TestCase):
         self.assertEqual(sent_messages[0]["role"], "system")
         self.assertEqual(sent_messages[-1]["role"], "user")
 
-    def test_provider_or_language_change_does_not_share_history(self):
+    def test_provider_or_language_change_does_not_share_history(self) -> None:
         service = ConversationService()
         settings = [
             OPENAI_SETTINGS,
@@ -252,7 +253,7 @@ class ConversationServiceTests(unittest.TestCase):
         ]
         sent: list[list[dict[str, str]]] = []
 
-        def reply(_settings, messages, *, allow_local_apps=False):
+        def reply(_settings: Any, messages: Any, *, allow_local_apps: bool = False) -> tuple[str, list[dict[str, str]]]:
             sent.append(messages)
             return "answer", []
 

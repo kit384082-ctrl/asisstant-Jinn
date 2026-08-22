@@ -16,7 +16,7 @@ from personal_agent import AgendaStore, AppLauncher, DesktopNotifier, PersonalAg
 UTC = timezone.utc
 
 
-class FakeNotifier:
+class FakeNotifier(DesktopNotifier):
     def __init__(self) -> None:
         self.messages: list[tuple[str, str]] = []
 
@@ -40,7 +40,7 @@ class PersonalAgentTests(unittest.TestCase):
         self.agent.close()
         self.tempdir.cleanup()
 
-    def test_items_persist_and_can_be_completed_or_deleted(self):
+    def test_items_persist_and_can_be_completed_or_deleted(self) -> None:
         timer = self.agent.create_timer(60, "Чай")
         note = self.agent.create_note("Идея", "Проверить прототип")
         event = self.agent.create_event(
@@ -98,7 +98,7 @@ class PersonalAgentTests(unittest.TestCase):
         self.assertEqual(first[0]["item_id"], item["id"])
         self.assertEqual(self.notifier.messages, [("Таймер завершён", "Перерыв")])
 
-    def test_concurrent_due_collection_does_not_duplicate(self):
+    def test_concurrent_due_collection_does_not_duplicate(self) -> None:
         self.agent.store.create_item(
             "reminder",
             "Одно уведомление",
@@ -140,7 +140,7 @@ class PersonalAgentTests(unittest.TestCase):
         deleted = self.agent.try_execute(f"Удали таймер #{timer_id}")
         self.assertEqual(deleted["intent"]["action"], "delete_item")
 
-    def test_localized_timer_commands_use_clean_default_titles(self):
+    def test_localized_timer_commands_use_clean_default_titles(self) -> None:
         examples = {
             "en": ("Set a timer for 2 minutes", "Timer"),
             "de": ("Stelle einen Timer für 2 Minuten", "Timer"),
@@ -150,10 +150,11 @@ class PersonalAgentTests(unittest.TestCase):
         for language, (command, expected_title) in examples.items():
             with self.subTest(language=language):
                 result = self.agent.try_execute(command, language=language)
+                assert result is not None
                 self.assertEqual(result["intent"]["action"], "create_timer")
                 self.assertEqual(result["item"]["title"], expected_title)
 
-    def test_ambiguous_start_verbs_are_classified_as_timers(self):
+    def test_ambiguous_start_verbs_are_classified_as_timers(self) -> None:
         examples = {
             "ru": "Запусти таймер на 2 минуты",
             "en": "Start a timer for 2 minutes",
@@ -165,6 +166,7 @@ class PersonalAgentTests(unittest.TestCase):
             with self.subTest(language=language):
                 self.assertTrue(PersonalAgent.is_timer_command(command, language))
                 result = self.agent.try_execute(command, language=language)
+                assert result is not None
                 self.assertEqual(result["intent"]["action"], "create_timer")
 
     def test_german_relative_reminder_keeps_relative_marker(self):
