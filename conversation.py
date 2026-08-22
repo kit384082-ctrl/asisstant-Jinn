@@ -361,6 +361,7 @@ class ConversationService:
                 arguments = json.loads(raw_arguments or "{}")
                 if not isinstance(arguments, dict):
                     raise TypeError("Tool arguments must be an object")
+                assert self._tool_executor is not None
                 result = self._tool_executor(name, arguments, allow_local_apps)
                 if isinstance(result, dict) and isinstance(result.get("results"), list):
                     sources.extend(

@@ -85,7 +85,7 @@ class AssistantController:
                 raise PermissionError("Интернет-поиск отключён в настройках.")
             if set(arguments) != {"query"}:
                 raise ValueError("Инструмент поиска принимает только поле query.")
-            query = arguments.get("query")
+            query = str(arguments.get("query", ""))
             results = self._search.search(
                 query, max_results=Config.WEB_SEARCH_MAX_RESULTS
             )
